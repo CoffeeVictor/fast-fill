@@ -1,4 +1,4 @@
-export type GridCell = string | null;
+export type GridCell = Color | null;
 
 export type GameRow = GridCell[];
 export type GameGrid = GameRow[];

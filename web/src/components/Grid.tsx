@@ -1,10 +1,21 @@
 import React from 'react';
-import { GameGrid, Move } from '../types';
+import { Color, GameGrid, Move } from '../types';
 // import './Grid.css';
 
 interface Props {
 	grid: GameGrid;
 	onCellClick: (move: Move) => void;
+}
+
+function getBGFromColor(color: Color | null): string {
+	if (!color) return 'bg-white';
+
+	const map: Record<Color, string> = {
+		blue: 'bg-blue-500',
+		red: 'bg-red-500',
+	};
+
+	return map[color];
 }
 
 export const Grid: React.FC<Props> = ({ grid, onCellClick }) => {
@@ -14,9 +25,9 @@ export const Grid: React.FC<Props> = ({ grid, onCellClick }) => {
 				row.map((cell, colIndex) => (
 					<div
 						key={`${rowIndex}-${colIndex}`}
-						className={`w-12 h-12 border rounded ${
-							cell ? `bg-${cell}-500` : 'bg-white'
-						}`}
+						className={`w-12 h-12 border rounded ${getBGFromColor(
+							cell
+						)}`}
 						onClick={() =>
 							onCellClick({
 								row: rowIndex,
