@@ -1,10 +1,5 @@
 import React from 'react';
-
-interface Player {
-	id: string;
-	color: string;
-	count: number;
-}
+import { Player } from '../types';
 interface Props {
 	players: Player[];
 	myId: string;

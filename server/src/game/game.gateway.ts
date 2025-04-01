@@ -19,6 +19,8 @@ export class GameGateway {
     const roomCode = this.gameService.createGame(client.id);
     await client.join(roomCode);
     client.emit('gameCreated', { roomCode });
+    const state = this.gameService.getGameState(roomCode);
+    this.server.to(roomCode).emit('stateUpdate', state);
   }
 
   @SubscribeMessage('joinGame')

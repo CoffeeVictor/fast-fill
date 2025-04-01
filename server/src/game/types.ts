@@ -1,4 +1,5 @@
-export type GameRow = (string | null)[];
+export type GridCell = string | null;
+export type GameRow = GridCell[];
 export type GameGrid = GameRow[];
 
 export const COLORS = ['red', 'blue'] as const;
