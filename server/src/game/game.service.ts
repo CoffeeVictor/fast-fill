@@ -1,56 +1,72 @@
 // src/game/game.service.ts
 import { Injectable } from '@nestjs/common';
-import { Socket } from 'socket.io';
-
-interface Player {
-  id: string;
-  color: string;
-  count: number;
-}
+import { COLORS, GameRoom, Move } from 'src/game/types';
+import { generateEmptyGrid, generateRoomCode } from 'src/lib/game';
 
 @Injectable()
 export class GameService {
-  private players: Player[] = [];
-  private grid: (string | null)[][] = Array.from(
-    { length: 4 },
-    () => Array(4).fill(null) as (string | null)[],
-  );
-  private startTime: number = Date.now();
+  private games: Record<string, GameRoom> = {};
 
-  private COLORS = ['red', 'blue'];
+  createGame(playerId: string): string {
+    const roomCode = generateRoomCode();
+    this.games[roomCode] = {
+      grid: generateEmptyGrid(),
+      players: [{ color: 'red', count: 0, id: playerId }],
+      startTime: Date.now(),
+    };
 
-  addPlayer(client: Socket) {
-    if (this.players.length < this.COLORS.length) {
-      this.players.push({
-        id: client.id,
-        color: this.COLORS[this.players.length],
-        count: 0,
-      });
+    return roomCode;
+  }
+
+  joinGame(playerId: string, roomId: string): boolean {
+    const game = this.games[roomId];
+
+    if (!game) return false;
+
+    const gameIsFull = game.players.length >= COLORS.length;
+
+    if (gameIsFull) return false;
+
+    const playerIsAlreadyInGame = game.players.some(
+      (player) => player.id === playerId,
+    );
+
+    if (playerIsAlreadyInGame) return false;
+
+    game.players.push({
+      id: playerId,
+      color: COLORS[game.players.length],
+      count: 0,
+    });
+
+    return true;
+  }
+
+  handleSquareClick(playerId: string, roomId: string, { col, row }: Move) {
+    const game = this.games[roomId];
+
+    if (!game) return;
+
+    const squareIsAlreadyFilled = game.grid[row][col] !== null;
+
+    if (squareIsAlreadyFilled) return;
+
+    const player = game.players.find((player) => player.id === playerId);
+
+    if (player) {
+      game.grid[row][col] = player.color;
+      player.count++;
     }
   }
 
-  removePlayer(client: Socket) {
-    this.players = this.players.filter((p) => p.id !== client.id);
-  }
+  getGameState(roomId: string) {
+    const game = this.games[roomId];
 
-  handleSquareClick(
-    client: Socket,
-    { row, col }: { row: number; col: number },
-  ) {
-    if (!this.grid[row][col]) {
-      const player = this.players.find((p) => p.id === client.id);
-      if (player) {
-        this.grid[row][col] = player.color;
-        player.count++;
-      }
-    }
-  }
-
-  getGameState() {
+    if (!game) return;
     return {
-      grid: this.grid,
-      players: this.players,
-      elapsedTime: Math.floor((Date.now() - this.startTime) / 1000),
+      grid: game.grid,
+      players: game.players,
+      elapsedTime: Math.floor((Date.now() - game.startTime) / 1000),
     };
   }
 }

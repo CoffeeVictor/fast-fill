@@ -2,8 +2,6 @@
 import {
   ConnectedSocket,
   MessageBody,
-  OnGatewayConnection,
-  OnGatewayDisconnect,
   SubscribeMessage,
   WebSocketGateway,
 } from '@nestjs/websockets';
@@ -11,27 +9,44 @@ import { Server, Socket } from 'socket.io';
 import { GameService } from './game.service';
 
 @WebSocketGateway({ cors: true })
-export class GameGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class GameGateway {
   constructor(private readonly gameService: GameService) {}
 
   private server: Server;
 
-  handleConnection(client: Socket) {
-    this.gameService.addPlayer(client);
-    this.server.emit('stateUpdate', this.gameService.getGameState());
+  @SubscribeMessage('createGame')
+  async handleCreateGame(@ConnectedSocket() client: Socket) {
+    const roomCode = this.gameService.createGame(client.id);
+    await client.join(roomCode);
+    client.emit('gameCreated', { roomCode });
   }
 
-  handleDisconnect(client: Socket) {
-    this.gameService.removePlayer(client);
+  @SubscribeMessage('joinGame')
+  async handleJoinGame(
+    @MessageBody() data: { roomCode: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const success = this.gameService.joinGame(client.id, data.roomCode);
+    if (success) {
+      await client.join(data.roomCode);
+      const state = this.gameService.getGameState(data.roomCode);
+      this.server.to(data.roomCode).emit('stateUpdate', state);
+    } else {
+      client.emit('error', 'Invalid or full game');
+    }
   }
 
   @SubscribeMessage('click')
   handleClick(
-    @MessageBody() data: { row: number; col: number },
+    @MessageBody() data: { roomCode: string; row: number; col: number },
     @ConnectedSocket() client: Socket,
   ) {
-    this.gameService.handleSquareClick(client, data);
-    this.server.emit('stateUpdate', this.gameService.getGameState());
+    this.gameService.handleSquareClick(client.id, data.roomCode, {
+      col: data.col,
+      row: data.row,
+    });
+    const state = this.gameService.getGameState(data.roomCode);
+    this.server.to(data.roomCode).emit('stateUpdate', state);
   }
 
   afterInit(server: Server) {
