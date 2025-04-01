@@ -59,7 +59,7 @@ function App() {
 				<h1 className='text-2xl font-bold mb-4'>🎮 Fast-Fill</h1>
 				<button
 					onClick={handleCreateGame}
-					className='bg-blue-500 text-white px-4 py-2 rounded w-full mb-4'
+					className='bg-blue-500 text-white px-4 py-2 rounded w-full cursor-pointer hover:brightness-90 transition-all mb-4'
 				>
 					Create Game
 				</button>
@@ -72,7 +72,7 @@ function App() {
 				/>
 				<button
 					onClick={handleJoinGame}
-					className='bg-green-500 text-white px-4 py-2 rounded w-full'
+					className='bg-green-500 text-white px-4 py-2 rounded w-full cursor-pointer hover:brightness-90 transition-all'
 				>
 					Join Game
 				</button>

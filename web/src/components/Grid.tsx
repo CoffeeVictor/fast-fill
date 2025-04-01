@@ -27,7 +27,7 @@ export const Grid: React.FC<Props> = ({ grid, onCellClick }) => {
 						key={`${rowIndex}-${colIndex}`}
 						className={`w-12 h-12 border rounded ${getBGFromColor(
 							cell
-						)}`}
+						)} cursor-pointer hover:brightness-90 transition-all`}
 						onClick={() =>
 							onCellClick({
 								row: rowIndex,
