@@ -9,6 +9,8 @@ function App() {
 	const [roomCode, setRoomCode] = useState('');
 	const [inputRoomCode, setInputRoomCode] = useState('');
 	const [gameState, setGameState] = useState<GameState | null>(null);
+	const [localElapsed, setLocalElapsed] = useState<number>(0);
+	const [timerRef, setTimerRef] = useState<number | null>(null);
 	const [myId, setMyId] = useState('');
 
 	useEffect(() => {
@@ -22,6 +24,15 @@ function App() {
 		});
 		socket.on('stateUpdate', (state: GameState) => {
 			setGameState(state);
+
+			if (timerRef) clearInterval(timerRef);
+
+			setLocalElapsed(state.elapsedTime);
+
+			const interval = setInterval(() => {
+				setLocalElapsed((prev) => prev + 1);
+			}, 1000);
+			setTimerRef(interval);
 		});
 		socket.on('error', (msg: string) => {
 			alert(msg);
@@ -32,8 +43,9 @@ function App() {
 			socket.off('gameCreated');
 			socket.off('stateUpdate');
 			socket.off('error');
+			if (timerRef) clearInterval(timerRef);
 		};
-	}, []);
+	}, [timerRef]);
 
 	const handleCreateGame = () => {
 		socket.emit('createGame');
@@ -89,9 +101,7 @@ function App() {
 			</div>
 			<Grid grid={gameState.grid} onCellClick={handleCellClick} />
 			<PlayerStats players={gameState.players} myId={myId} />
-			<div className='mt-2 text-gray-700'>
-				⏱ Elapsed: {gameState.elapsedTime}s
-			</div>
+			<div className='mt-2 text-gray-700'>⏱ Elapsed: {localElapsed}s</div>
 		</div>
 	);
 }
