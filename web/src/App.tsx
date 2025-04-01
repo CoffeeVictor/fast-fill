@@ -1,35 +1,45 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import { Grid } from './components/Grid';
+import { PlayerStats } from './components/PlayerStats';
+import { socket } from './socket';
+import { GameState } from './types';
 
 function App() {
-  const [count, setCount] = useState(0)
+	const [gameState, setGameState] = useState<GameState | null>(null);
+	const [myId, setMyId] = useState<string>('');
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+	useEffect(() => {
+		socket.on('connect', () => {
+			if (!socket.id) throw new Error('Socket id not defined.');
+
+			setMyId(socket.id);
+		});
+
+		socket.on('stateUpdate', (state: GameState) => {
+			setGameState(state);
+		});
+
+		return () => {
+			socket.off('connect');
+			socket.off('stateUpdate');
+		};
+	}, []);
+
+	const handleCellClick = (row: number, col: number) => {
+		socket.emit('click', { row, col });
+	};
+
+	if (!gameState) return <div>Waiting for game state...</div>;
+
+	return (
+		<div className='p-4'>
+			<Grid grid={gameState.grid} onCellClick={handleCellClick} />
+			<PlayerStats players={gameState.players} myId={myId} />
+			<div className='mt-2 text-gray-700'>
+				⏱ Elapsed: {gameState.elapsedTime}s
+			</div>
+		</div>
+	);
 }
 
-export default App
+export default App;
