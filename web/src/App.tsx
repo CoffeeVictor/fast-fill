@@ -37,12 +37,25 @@ function App() {
 		socket.on('error', (msg: string) => {
 			alert(msg);
 		});
+		socket.on('gameOver', ({ winner }) => {
+			if (winner === 'draw') {
+				alert("🟰 It's a draw!");
+			} else if (winner === myId) {
+				alert('🏆 You won!');
+			} else {
+				const winnerColor =
+					gameState?.players.find((p) => p.id === winner)?.color ||
+					'Unknown';
+				alert(`🎉 ${winnerColor} player wins!`);
+			}
+		});
 
 		return () => {
 			socket.off('connect');
 			socket.off('gameCreated');
 			socket.off('stateUpdate');
 			socket.off('error');
+			socket.off('gameOver');
 			if (timerRef) clearInterval(timerRef);
 		};
 	}, [timerRef]);

@@ -43,12 +43,20 @@ export class GameGateway {
     @MessageBody() data: { roomCode: string; row: number; col: number },
     @ConnectedSocket() client: Socket,
   ) {
-    this.gameService.handleSquareClick(client.id, data.roomCode, {
-      col: data.col,
-      row: data.row,
-    });
+    const winner = this.gameService.handleSquareClick(
+      client.id,
+      data.roomCode,
+      {
+        col: data.col,
+        row: data.row,
+      },
+    );
     const state = this.gameService.getGameState(data.roomCode);
     this.server.to(data.roomCode).emit('stateUpdate', state);
+
+    if (winner) {
+      this.server.to(data.roomCode).emit('gameOver', { winner });
+    }
   }
 
   afterInit(server: Server) {

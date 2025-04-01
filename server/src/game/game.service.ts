@@ -57,6 +57,21 @@ export class GameService {
       game.grid[row][col] = player.color;
       player.count++;
     }
+
+    const isFull = game.grid.every((row) => row.every((cell) => cell !== null));
+    if (isFull) {
+      const sorted = [...game.players].sort((a, b) => b.count - a.count);
+      const topScore = sorted[0].count;
+      const winners = sorted.filter((p) => p.count === topScore);
+
+      if (winners.length > 1) {
+        return 'draw';
+      } else {
+        return winners[0].id;
+      }
+    }
+
+    return null;
   }
 
   getGameState(roomId: string) {
